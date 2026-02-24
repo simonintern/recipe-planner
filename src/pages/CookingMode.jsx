@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 
-// Mock data - same as RecipesPage
 const recipes = {
   '1': {
     id: '1',
     title: 'Spaghetti Carbonara',
-    description: 'Classic Italian pasta with eggs, cheese, and pancetta',
     prepTime: 15,
     cookTime: 20,
     servings: 4,
@@ -22,7 +20,6 @@ const recipes = {
   '2': {
     id: '2',
     title: 'Chicken Stir Fry',
-    description: 'Quick and healthy vegetable chicken stir fry',
     prepTime: 20,
     cookTime: 15,
     servings: 3,
@@ -38,7 +35,6 @@ const recipes = {
   '3': {
     id: '3',
     title: 'Greek Salad',
-    description: 'Fresh Mediterranean salad with feta and olives',
     prepTime: 15,
     cookTime: 0,
     servings: 4,
@@ -60,6 +56,15 @@ export default function CookingMode() {
   
   const [currentStep, setCurrentStep] = useState(stepIndex ? parseInt(stepIndex) - 1 : 0)
   const [completedSteps, setCompletedSteps] = useState([])
+
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        await navigator.wakeLock?.request('screen')
+      } catch (e) {}
+    }
+    requestWakeLock()
+  }, [])
 
   if (!recipe) {
     return (
@@ -99,29 +104,19 @@ export default function CookingMode() {
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps([...completedSteps, currentStep])
     }
-    // TODO: Mark recipe as completed in backend
     alert('Cooking completed! 🎉')
     navigate('/')
   }
 
-  // Keep screen awake (simulated - real implementation would use Wake Lock API)
-  useEffect(() => {
-    const requestWakeLock = async () => {
-      try {
-        const wakeLock = await navigator.wakeLock?.request('screen')
-        return () => wakeLock?.release()
-      } catch (e) {
-        console.log('Wake Lock not supported')
-      }
-    }
-    requestWakeLock()
-  }, [])
-
   return (
     <div className="cooking-mode">
       <div className="cooking-header">
-        <Link to={`/recipe/${recipeId}`} className="btn btn-secondary">← Exit</Link>
-        <h2>{recipe.title}</h2>
+        <Link to={`/recipe/${recipeId}`} className="btn btn-secondary"><i className="fas fa-arrow-left"></i></Link>
+        <h3>{recipe.title}</h3>
+        <div style={{ width: 40 }}></div>
+      </div>
+
+      <div className="cooking-content">
         <div className="step-progress">
           {recipe.steps.map((_, index) => (
             <div 
@@ -133,9 +128,7 @@ export default function CookingMode() {
             />
           ))}
         </div>
-      </div>
 
-      <div className="cooking-content">
         <div className="current-step">
           <div className="step-number">Step {currentStep + 1} of {totalSteps}</div>
           <div className="step-instruction">
@@ -148,36 +141,20 @@ export default function CookingMode() {
               onClick={goToPrevStep}
               disabled={isFirstStep}
             >
-              ← Previous
+              <i className="fas fa-chevron-left"></i>
             </button>
             
             {isLastStep ? (
               <button className="btn btn-primary" onClick={finishCooking}>
-                ✓ Finish
+                <i className="fas fa-check"></i> Done
               </button>
             ) : (
               <button className="btn btn-primary" onClick={goToNextStep}>
-                Next →
+                Next <i className="fas fa-chevron-right"></i>
               </button>
             )}
           </div>
         </div>
-
-        {/* Preview upcoming steps */}
-        {currentStep < totalSteps - 1 && (
-          <div style={{ marginTop: '2rem', color: 'var(--text-light)' }}>
-            <details>
-              <summary style={{ cursor: 'pointer' }}>Show upcoming steps</summary>
-              <ul style={{ listStyle: 'none', marginTop: '1rem', textAlign: 'left' }}>
-                {recipe.steps.slice(currentStep + 1).map((step, idx) => (
-                  <li key={idx} style={{ padding: '0.5rem', opacity: 0.6 }}>
-                    {currentStep + idx + 2}. {step.instruction}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </div>
-        )}
       </div>
     </div>
   )

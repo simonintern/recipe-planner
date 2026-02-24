@@ -1,6 +1,6 @@
-import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import RecipesPage from './pages/RecipesPage'
-import CalendarPage from './pages/CalendarPage'
+import NewRecipeForm from './pages/NewRecipeForm'
 import CookingMode from './pages/CookingMode'
 import RecipeDetail from './pages/RecipeDetail'
 
@@ -17,23 +17,18 @@ export default function App() {
     )
   }
 
+  if (location.pathname.startsWith('/recipe/')) {
+    return (
+      <Routes>
+        <Route path="/recipe/:id" element={<RecipeDetail />} />
+      </Routes>
+    )
+  }
+
   return (
-    <div className="app">
-      <nav className="navbar">
-        <h1>Recipe Planner</h1>
-        <div className="nav-links">
-          <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Recipes</Link>
-          <Link to="/calendar" className={location.pathname === '/calendar' ? 'active' : ''}>Calendar</Link>
-        </div>
-      </nav>
-      
-      <main>
-        <Routes>
-          <Route path="/" element={<RecipesPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/recipe/:id" element={<RecipeDetail />} />
-        </Routes>
-      </main>
-    </div>
+    <Routes>
+      <Route path="/" element={<RecipesPage />} />
+      <Route path="/new-recipe" element={<NewRecipeForm />} />
+    </Routes>
   )
 }

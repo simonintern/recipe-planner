@@ -1,127 +1,115 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
-// Mock data - will connect to backend later
 const initialRecipes = [
-  {
-    id: '1',
-    title: 'Spaghetti Carbonara',
-    description: 'Classic Italian pasta with eggs, cheese, and pancetta',
-    prepTime: 15,
-    cookTime: 20,
-    servings: 4,
-    source: 'italianrecipes.com',
-    ingredients: ['1 lb spaghetti', '6 oz pancetta', '4 eggs', '1 cup pecorino Romano', 'Black pepper'],
-    steps: [
-      { order: 1, instruction: 'Bring a large pot of salted water to boil' },
-      { order: 2, instruction: 'Cook spaghetti according to package directions' },
-      { order: 3, instruction: 'Meanwhile, cook pancetta in a large skillet until crispy' },
-      { order: 4, instruction: 'Beat eggs with cheese and pepper' },
-      { order: 5, instruction: 'Drain pasta, add to pancetta, remove from heat, add egg mixture and toss' }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Chicken Stir Fry',
-    description: 'Quick and healthy vegetable chicken stir fry',
-    prepTime: 20,
-    cookTime: 15,
-    servings: 3,
-    source: 'asiancuisine.com',
-    ingredients: ['1 lb chicken breast', '2 cups mixed vegetables', '3 tbsp soy sauce', '1 tbsp sesame oil', 'Garlic', 'Ginger'],
-    steps: [
-      { order: 1, instruction: 'Cut chicken into bite-sized pieces' },
-      { order: 2, instruction: 'Heat oil in a wok over high heat' },
-      { order: 3, instruction: 'Stir fry chicken until golden, remove' },
-      { order: 4, instruction: 'Stir fry vegetables with garlic and ginger' },
-      { order: 5, instruction: 'Return chicken, add sauce, toss and serve' }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Greek Salad',
-    description: 'Fresh Mediterranean salad with feta and olives',
-    prepTime: 15,
-    cookTime: 0,
-    servings: 4,
-    source: 'mediterraneanrecipes.com',
-    ingredients: ['4 tomatoes', '1 cucumber', '1 red onion', '1/2 cup kalamata olives', '4 oz feta cheese', 'Olive oil', 'Oregano'],
-    steps: [
-      { order: 1, instruction: 'Chop tomatoes and cucumber into chunks' },
-      { order: 2, instruction: 'Slice red onion thinly' },
-      { order: 3, instruction: 'Combine vegetables in a bowl' },
-      { order: 4, instruction: 'Add olives and crumbled feta' },
-      { order: 5, instruction: 'Drizzle with olive oil, sprinkle oregano, toss and serve' }
-    ]
-  }
+  { id: '1', title: 'Spaghetti Carbonara', prepTime: 15, cookTime: 20 },
+  { id: '2', title: 'Chicken Stir Fry', prepTime: 20, cookTime: 15 },
+  { id: '3', title: 'Greek Salad', prepTime: 15, cookTime: 0 }
 ]
+
+const getWeekDays = () => {
+  const today = new Date()
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today)
+    date.setDate(today.getDate() + i)
+    days.push({
+      date,
+      dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      dayNum: date.getDate()
+    })
+  }
+  return days
+}
 
 export default function RecipesPage() {
   const [recipes] = useState(initialRecipes)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [newRecipeUrl, setNewRecipeUrl] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedDay, setSelectedDay] = useState(0)
+  const weekDays = getWeekDays()
+  const navigate = useNavigate()
 
-  const handleAddRecipe = () => {
-    // TODO: Connect to scraper API
-    alert('This will call the recipe-scraper API to import: ' + newRecipeUrl)
-    setShowAddModal(false)
-    setNewRecipeUrl('')
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.startsWith('http')) {
+      alert('Would scrape recipe from: ' + searchQuery)
+    }
   }
 
   return (
-    <div>
-      <div className="page-header">
-        <h2>My Recipes</h2>
-        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-          + Add Recipe
-        </button>
+    <div className="app">
+      {/* Search */}
+      <div className="search-section">
+        <form className="search-bar" onSubmit={handleSearch}>
+          <i className="fas fa-search icon"></i>
+          <input 
+            type="text" 
+            placeholder="Search or paste recipe URL..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </form>
       </div>
 
-      {recipes.length === 0 ? (
-        <div className="empty-state">
-          <h3>No recipes yet</h3>
-          <p>Add your first recipe to get started!</p>
-        </div>
-      ) : (
-        <div className="recipe-grid">
-          {recipes.map(recipe => (
-            <Link to={`/recipe/${recipe.id}`} key={recipe.id} className="recipe-card">
-              <div className="recipe-card-image">
-                🍳
-              </div>
-              <div className="recipe-card-content">
-                <h3>{recipe.title}</h3>
-                <div className="recipe-card-meta">
-                  <span>⏱ {recipe.prepTime + recipe.cookTime} min</span>
-                  <span>👥 {recipe.servings} servings</span>
-                </div>
-              </div>
-            </Link>
+      {/* New Recipe Button */}
+      <button className="new-recipe-btn" onClick={() => navigate('/new-recipe')}>
+        <i className="fas fa-plus"></i> New Recipe
+      </button>
+
+      {/* Schedule */}
+      <div className="section">
+        <h3>Schedule</h3>
+        <div className="schedule-days">
+          {weekDays.map((d, i) => (
+            <div 
+              key={i} 
+              className={`schedule-day ${selectedDay === i ? 'active' : ''}`}
+              onClick={() => setSelectedDay(i)}
+            >
+              <span className="day-name">{d.dayName}</span>
+              <span className="day-num">{d.dayNum}</span>
+            </div>
           ))}
         </div>
-      )}
+      </div>
 
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Add Recipe from URL</h3>
-            <input
-              type="url"
-              placeholder="Paste recipe URL here..."
-              value={newRecipeUrl}
-              onChange={e => setNewRecipeUrl(e.target.value)}
-            />
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleAddRecipe}>
-                Import
-              </button>
+      {/* Queue */}
+      <div className="section queue-section">
+        <h3>Backlog <i className="fas fa-arrow-up"></i></h3>
+        <div className="queue-list">
+          {recipes.map(recipe => (
+            <div 
+              key={recipe.id} 
+              className="queue-card"
+              onClick={() => navigate(`/recipe/${recipe.id}`)}
+            >
+              <div className="queue-card-image">
+                <i className="fas fa-utensils"></i>
+              </div>
+              <div className="queue-card-content">
+                <h4>{recipe.title}</h4>
+                <span className="time"><i className="fas fa-clock"></i> {recipe.prepTime + recipe.cookTime}m</span>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* Bottom Nav */}
+      <nav className="bottom-nav">
+        <div className="nav-item active">
+          <i className="fas fa-book icon"></i>
+          <span>Recipes</span>
+        </div>
+        <div className="nav-item">
+          <i className="fas fa-calendar icon"></i>
+          <span>Calendar</span>
+        </div>
+        <div className="nav-item">
+          <i className="fas fa-shopping-cart icon"></i>
+          <span>Shopping</span>
+        </div>
+      </nav>
     </div>
   )
 }

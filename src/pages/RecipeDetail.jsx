@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 
-// Mock data - same as RecipesPage
 const recipes = {
   '1': {
     id: '1',
@@ -10,7 +9,6 @@ const recipes = {
     prepTime: 15,
     cookTime: 20,
     servings: 4,
-    source: 'italianrecipes.com',
     ingredients: ['1 lb spaghetti', '6 oz pancetta', '4 eggs', '1 cup pecorino Romano', 'Black pepper'],
     steps: [
       { order: 1, instruction: 'Bring a large pot of salted water to boil' },
@@ -27,7 +25,6 @@ const recipes = {
     prepTime: 20,
     cookTime: 15,
     servings: 3,
-    source: 'asiancuisine.com',
     ingredients: ['1 lb chicken breast', '2 cups mixed vegetables', '3 tbsp soy sauce', '1 tbsp sesame oil', 'Garlic', 'Ginger'],
     steps: [
       { order: 1, instruction: 'Cut chicken into bite-sized pieces' },
@@ -44,7 +41,6 @@ const recipes = {
     prepTime: 15,
     cookTime: 0,
     servings: 4,
-    source: 'mediterraneanrecipes.com',
     ingredients: ['4 tomatoes', '1 cucumber', '1 red onion', '1/2 cup kalamata olives', '4 oz feta cheese', 'Olive oil', 'Oregano'],
     steps: [
       { order: 1, instruction: 'Chop tomatoes and cucumber into chunks' },
@@ -59,97 +55,77 @@ const recipes = {
 export default function RecipeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [showPlanModal, setShowPlanModal] = useState(false)
-  const [planDate, setPlanDate] = useState('')
-  
   const recipe = recipes[id]
+
+  const [currentStep, setCurrentStep] = useState(0)
+
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        await navigator.wakeLock?.request('screen')
+      } catch (e) {}
+    }
+    requestWakeLock()
+  }, [])
 
   if (!recipe) {
     return (
       <div className="recipe-detail">
+        <Link to="/" className="back-link"><i className="fas fa-arrow-left"></i> Back</Link>
         <div className="empty-state">
           <h3>Recipe not found</h3>
-          <Link to="/" className="btn btn-primary">Go back</Link>
         </div>
       </div>
     )
   }
 
-  const handlePlanRecipe = () => {
-    // TODO: Save to backend
-    alert(`Planned "${recipe.title}" for ${planDate}`)
-    setShowPlanModal(false)
-  }
+  const totalSteps = recipe.steps.length
 
   return (
-    <div className="recipe-detail">
-      <Link to="/" style={{ color: 'var(--text-light)', textDecoration: 'none', display: 'inline-block', marginBottom: '1rem' }}>
-        ← Back to Recipes
-      </Link>
+    <div className="app">
+      <div className="recipe-detail">
+        <Link to="/" className="back-link"><i className="fas fa-arrow-left"></i> Back</Link>
 
-      <div className="recipe-detail-header">
-        <h2>{recipe.title}</h2>
-        <p style={{ color: 'var(--text-light)' }}>{recipe.description}</p>
-        
+        <div className="recipe-detail-image">
+          <i className="fas fa-utensils" style={{ fontSize: '5rem', color: 'white' }}></i>
+        </div>
+
+        <div className="recipe-detail-header">
+          <h2>{recipe.title}</h2>
+          <p style={{ color: 'var(--text-light)' }}>{recipe.description}</p>
+        </div>
+
         <div className="recipe-detail-meta">
-          <span>⏱ Prep: {recipe.prepTime} min</span>
-          <span>🔥 Cook: {recipe.cookTime} min</span>
-          <span>👥 {recipe.servings} servings</span>
-          <span>📎 {recipe.source}</span>
+          <span><i className="fas fa-clock"></i> {recipe.prepTime}m prep</span>
+          <span><i className="fas fa-fire"></i> {recipe.cookTime}m cook</span>
+          <span><i className="fas fa-users"></i> {recipe.servings}</span>
+        </div>
+
+        <button className="btn btn-primary" onClick={() => navigate(`/cook/${recipe.id}`)} style={{ width: '100%', marginBottom: '1.5rem' }}>
+          <i className="fas fa-play"></i> Start Cooking
+        </button>
+
+        <div className="recipe-section">
+          <h3>Ingredients</h3>
+          <ul className="ingredient-list">
+            {recipe.ingredients.map((ingredient, index) => (
+              <li key={index}>{ingredient}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="recipe-section">
+          <h3>Instructions</h3>
+          <ol className="step-list">
+            {recipe.steps.map((step) => (
+              <li key={step.order}>
+                <span className="step-num">{step.order}</span>
+                <span>{step.instruction}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
-
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-        <button className="btn btn-primary" onClick={() => navigate(`/cook/${recipe.id}`)}>
-          ▶ Start Cooking
-        </button>
-        <button className="btn btn-secondary" onClick={() => setShowPlanModal(true)}>
-          📅 Plan Meal
-        </button>
-      </div>
-
-      <div className="recipe-section">
-        <h3>Ingredients</h3>
-        <ul className="ingredient-list">
-          {recipe.ingredients.map((ingredient, index) => (
-            <li key={index}>{ingredient}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="recipe-section">
-        <h3>Instructions</h3>
-        <ol className="step-list">
-          {recipe.steps.map((step) => (
-            <li key={step.order}>
-              <span className="step-num">{step.order}</span>
-              <span>{step.instruction}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      {showPlanModal && (
-        <div className="modal-overlay" onClick={() => setShowPlanModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Plan to Cook</h3>
-            <input
-              type="date"
-              value={planDate}
-              onChange={e => setPlanDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-            />
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setShowPlanModal(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handlePlanRecipe}>
-                Plan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
